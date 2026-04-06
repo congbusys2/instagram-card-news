@@ -14,6 +14,20 @@ type ControlsProps = {
 const controlClass =
   "min-w-0 rounded-lg border border-gray-700 bg-[#111] px-4 py-2 text-sm text-white shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-gray-500 focus:ring-1 focus:ring-gray-600";
 
+/** 카테고리 select 옵션 (표시·API 전달 값 동일) */
+export const EDITOR_CATEGORY_OPTIONS = [
+  "자기계발",
+  "경제 / 재테크",
+  "커리어 / 취업",
+  "트렌드 / 이슈",
+  "라이프스타일",
+  "인간관계 / 연애",
+  "마케팅",
+  "디자인",
+  "패션",
+  "AI / 기술",
+] as const;
+
 export function Controls({
   category,
   language,
@@ -32,15 +46,14 @@ export function Controls({
         id="editor-category"
         value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
-        className={controlClass}
+        className={`${controlClass} min-w-[12rem] max-w-[min(100%,20rem)]`}
         aria-label="카테고리"
       >
-        <option value="design">디자인</option>
-        <option value="economy">경제</option>
-        <option value="self">자기계발</option>
-        <option value="life">라이프</option>
-        <option value="marketing">마케팅</option>
-        <option value="tech">테크</option>
+        {EDITOR_CATEGORY_OPTIONS.map((label) => (
+          <option key={label} value={label}>
+            {label}
+          </option>
+        ))}
       </select>
       <select
         id="editor-language"

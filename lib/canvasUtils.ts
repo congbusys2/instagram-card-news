@@ -55,15 +55,27 @@ export function drawReadableOverlay(
   ctx.restore();
 }
 
+export type CardTextAlign = "left" | "center" | "right";
+
 export type DrawCardNewsTextOptions = {
   /** 기본 좌측 여백(padX) 기준 X 이동(px, 1024 좌표계) */
   offsetX?: number;
   /** 블록 수직 중심 기준 Y 이동(px, 1024 좌표계) */
   offsetY?: number;
+  /** 텍스트 가로 정렬 */
+  align?: CardTextAlign;
+  /** 채우기 색 (#RRGGBB 등) */
+  color?: string;
 };
 
+function normalizeCanvasTextColor(input: string | undefined): string {
+  const s = (input ?? "#ffffff").trim();
+  if (!s || s.length > 120) return "#ffffff";
+  return s;
+}
+
 /**
- * 제목 + 본문을 좌측 정렬 블록으로 렌더링 (흰색, 그림자). offset은 블록 전체 이동.
+ * 제목 + 본문 블록 렌더링 (그림자 + 정렬·색 옵션). offset은 블록 전체 이동.
  */
 export function drawCardNewsText(
   ctx: CanvasRenderingContext2D,
@@ -81,6 +93,8 @@ export function drawCardNewsText(
   const maxW = size - 2 * padX;
   const offsetX = options?.offsetX ?? 0;
   const offsetY = options?.offsetY ?? 0;
+  const align: CardTextAlign = options?.align ?? "left";
+  const fillColor = normalizeCanvasTextColor(options?.color);
 
   let titleSize = Math.floor(size / 16);
   titleSize = Math.max(36, Math.min(56, titleSize));
@@ -115,21 +129,30 @@ export function drawCardNewsText(
     totalH += Math.min(bodyLines.length, 8) * bodyLh;
   }
 
-  const leftX = padX + offsetX;
+  let anchorX: number;
+  if (align === "left") {
+    anchorX = padX + offsetX;
+  } else if (align === "center") {
+    anchorX = size / 2 + offsetX;
+  } else {
+    anchorX = size - padX + offsetX;
+  }
+
   let cursorY = size / 2 + offsetY - totalH / 2;
 
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.55)";
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 2;
-  ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillStyle = "#ffffff";
+  ctx.textAlign =
+    align === "left" ? "left" : align === "center" ? "center" : "right";
+  ctx.fillStyle = fillColor;
 
   if (titleLines.length) {
     ctx.font = `bold ${titleSize}px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif`;
     for (const ln of titleLines) {
-      ctx.fillText(ln, leftX, cursorY);
+      ctx.fillText(ln, anchorX, cursorY);
       cursorY += titleLh;
     }
     if (bodyLines.length) {
@@ -140,7 +163,7 @@ export function drawCardNewsText(
   if (bodyLines.length) {
     ctx.font = `600 ${bodySize}px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif`;
     for (const ln of bodyLines.slice(0, 8)) {
-      ctx.fillText(ln, leftX, cursorY);
+      ctx.fillText(ln, anchorX, cursorY);
       cursorY += bodyLh;
     }
   }

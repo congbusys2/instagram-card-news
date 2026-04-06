@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import {
   CARD_CANVAS_SIZE,
+  type CardTextAlign,
   renderCardNewsCanvas,
 } from "@/lib/canvasUtils";
 
@@ -14,6 +15,8 @@ export type CanvasEditorProps = {
   body: string;
   textOffsetX?: number;
   textOffsetY?: number;
+  textAlign?: CardTextAlign;
+  textColor?: string;
   onTextOffsetChange?: (x: number, y: number) => void;
   isGenerating: boolean;
 };
@@ -26,6 +29,8 @@ export function CanvasEditor({
   body,
   textOffsetX = 0,
   textOffsetY = 0,
+  textAlign = "left",
+  textColor = "#ffffff",
   onTextOffsetChange,
   isGenerating,
 }: CanvasEditorProps) {
@@ -54,6 +59,8 @@ export function CanvasEditor({
     void renderCardNewsCanvas(canvas, imageSrc, title, body, {
       offsetX: textOffsetX,
       offsetY: textOffsetY,
+      align: textAlign,
+      color: textColor,
     }).catch(() => {
       if (!cancelled && canvas.getContext("2d")) {
         const ctx = canvas.getContext("2d");
@@ -67,7 +74,7 @@ export function CanvasEditor({
     return () => {
       cancelled = true;
     };
-  }, [imageSrc, title, body, textOffsetX, textOffsetY]);
+  }, [imageSrc, title, body, textOffsetX, textOffsetY, textAlign, textColor]);
 
   const canDragText =
     Boolean(onTextOffsetChange) && Boolean(title.trim() || body.trim());

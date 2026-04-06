@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Sparkles } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, Download, Sparkles } from "lucide-react";
 import JSZip from "jszip";
 import { CanvasEditor } from "@/components/CanvasEditor";
-import { Controls } from "@/components/Controls";
+import type { CardTextAlign } from "@/lib/canvasUtils";
+import { Controls, EDITOR_CATEGORY_OPTIONS } from "@/components/Controls";
 import { Header } from "@/components/Header";
-import { ImageUploader } from "@/components/ImageUploader";
+import { ImageUploader, isLikelyImageFile } from "@/components/ImageUploader";
 import { LimitNoticeModal } from "@/components/LimitNoticeModal";
+
+const GENERATE_LIMIT_NOTICE =
+  "현재 요청이 많아 자동 생성이 제한되고 있습니다 😢\n직접 문구를 입력해 콘텐츠를 제작해보세요.";
 
 type CardItem = {
   id: string;
@@ -17,6 +21,8 @@ type CardItem = {
   body: string;
   textOffsetX: number;
   textOffsetY: number;
+  textAlign: CardTextAlign;
+  textColor: string;
 };
 
 function makeId() {
@@ -27,7 +33,7 @@ export default function Home() {
   const itemsRef = useRef<CardItem[]>([]);
   const canvasByIdRef = useRef<Map<string, HTMLCanvasElement>>(new Map());
 
-  const [category, setCategory] = useState("design");
+  const [category, setCategory] = useState("자기계발");
   const [language, setLanguage] = useState("ko");
   const [keyword, setKeyword] = useState("");
 
@@ -37,6 +43,8 @@ export default function Home() {
 
   const [error, setError] = useState<string | null>(null);
   const [limitModalOpen, setLimitModalOpen] = useState(false);
+  const [limitModalMessage, setLimitModalMessage] = useState("");
+  const [limitModalTitle, setLimitModalTitle] = useState("안내");
   const [zipBusy, setZipBusy] = useState(false);
 
   itemsRef.current = items;
@@ -46,6 +54,13 @@ export default function Home() {
       itemsRef.current.forEach((i) => URL.revokeObjectURL(i.url));
     };
   }, []);
+
+  useEffect(() => {
+    const allowed = new Set<string>(EDITOR_CATEGORY_OPTIONS);
+    if (!allowed.has(category)) {
+      setCategory(EDITOR_CATEGORY_OPTIONS[0]);
+    }
+  }, [category]);
 
   useEffect(() => {
     if (items.length === 0) {
@@ -66,7 +81,7 @@ export default function Home() {
   }, []);
 
   const onFilesSelected = useCallback((files: File[]) => {
-    const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+    const imageFiles = files.filter(isLikelyImageFile);
     if (imageFiles.length === 0) return;
 
     const additions: CardItem[] = imageFiles.map((file) => ({
@@ -77,6 +92,8 @@ export default function Home() {
       body: "",
       textOffsetX: 0,
       textOffsetY: 0,
+      textAlign: "left",
+      textColor: "#ffffff",
     }));
 
     setItems((prev) => [...prev, ...additions]);
@@ -100,14 +117,26 @@ export default function Home() {
     );
   }, []);
 
-  const openGenerateModal = useCallback(() => {
+  const closeLimitModal = useCallback(() => {
+    setLimitModalOpen(false);
+    setLimitModalMessage("");
+    setLimitModalTitle("안내");
+  }, []);
+
+  const openGenerateLimitNotice = useCallback(() => {
     if (!keyword.trim()) {
       setError("키워드를 입력한 뒤 생성해 주세요.");
       return;
     }
+    if (!activeItem) {
+      setError("먼저 이미지를 업로드하고, 문구를 넣을 카드를 선택해 주세요.");
+      return;
+    }
     setError(null);
+    setLimitModalTitle("안내");
+    setLimitModalMessage(GENERATE_LIMIT_NOTICE);
     setLimitModalOpen(true);
-  }, [keyword]);
+  }, [keyword, activeItem]);
 
   const handleDownloadPng = useCallback(() => {
     if (!activeItem) return;
@@ -166,7 +195,9 @@ export default function Home() {
     <main className="min-h-screen bg-zinc-950 text-white">
       <LimitNoticeModal
         open={limitModalOpen}
-        onClose={() => setLimitModalOpen(false)}
+        onClose={closeLimitModal}
+        title={limitModalTitle}
+        message={limitModalMessage}
       />
       <div className="mx-auto max-w-4xl px-4 pb-20 sm:px-6">
         <Header />
@@ -181,8 +212,8 @@ export default function Home() {
           generateButton={
             <button
               type="button"
-              onClick={openGenerateModal}
-              disabled={!keyword.trim()}
+              onClick={openGenerateLimitNotice}
+              disabled={!keyword.trim() || items.length === 0}
               className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Sparkles className="h-4 w-4" aria-hidden />
@@ -262,6 +293,8 @@ export default function Home() {
                           textOffsetY: y,
                         })
                       }
+                      textAlign={item.textAlign}
+                      textColor={item.textColor}
                       isGenerating={false}
                     />
                   </div>
@@ -325,11 +358,82 @@ export default function Home() {
                     className="w-full resize-y rounded-lg border border-gray-700 bg-[#111] px-4 py-2 text-sm text-white outline-none focus:border-gray-500"
                   />
                 </div>
+
+                <div>
+                  <span className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    텍스트 정렬
+                  </span>
+                  <div className="flex gap-2">
+                    {(
+                      [
+                        { id: "left" as const, label: "좌측", Icon: AlignLeft },
+                        { id: "center" as const, label: "중앙", Icon: AlignCenter },
+                        { id: "right" as const, label: "우측", Icon: AlignRight },
+                      ] as const
+                    ).map(({ id, label, Icon }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() =>
+                          updateItem(activeItem.id, { textAlign: id })
+                        }
+                        className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
+                          activeItem.textAlign === id
+                            ? "border-violet-500 bg-violet-950/50 text-violet-200"
+                            : "border-zinc-600 bg-[#111] text-zinc-400 hover:border-zinc-500"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" aria-hidden />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="edit-text-color"
+                    className="mb-1.5 block text-xs font-medium text-zinc-500"
+                  >
+                    텍스트 색
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="edit-text-color"
+                      type="color"
+                      value={
+                        /^#[0-9A-Fa-f]{6}$/.test(activeItem.textColor)
+                          ? activeItem.textColor
+                          : "#ffffff"
+                      }
+                      onChange={(e) =>
+                        updateItem(activeItem.id, {
+                          textColor: e.target.value.toLowerCase(),
+                        })
+                      }
+                      className="h-10 w-14 cursor-pointer rounded border border-zinc-600 bg-zinc-900"
+                      aria-label="텍스트 색 선택"
+                    />
+                    <input
+                      type="text"
+                      value={activeItem.textColor}
+                      onChange={(e) =>
+                        updateItem(activeItem.id, {
+                          textColor: e.target.value,
+                        })
+                      }
+                      placeholder="#ffffff"
+                      spellCheck={false}
+                      className="min-w-0 flex-1 rounded-lg border border-gray-700 bg-[#111] px-3 py-2 font-mono text-sm text-white outline-none focus:border-gray-500"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <button
                     type="button"
-                    onClick={openGenerateModal}
-                    disabled={!keyword.trim()}
+                    onClick={openGenerateLimitNotice}
+                    disabled={!keyword.trim() || items.length === 0}
                     className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-violet-500/50 bg-violet-950/40 px-5 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-900/40 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     텍스트 재생성

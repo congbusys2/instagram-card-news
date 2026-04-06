@@ -1,4 +1,14 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, type RequestOptions } from "@google/generative-ai";
+
+/**
+ * 기본: https://generativelanguage.googleapis.com
+ * 프록시·다른 리전 엔드포인트를 쓸 때만 .env에 설정 (끝의 / 는 붙이지 않는 것을 권장)
+ */
+function getGeminiRequestOptions(): RequestOptions | undefined {
+  const raw = process.env.GEMINI_API_BASE_URL?.replace(/^["']|["']$/g, "").trim();
+  if (!raw) return undefined;
+  return { baseUrl: raw };
+}
 
 export type ToneOption = "감성" | "위로" | "응원";
 export type LengthOption = "짧게" | "보통";
@@ -71,10 +81,13 @@ export async function generateInstagramText(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    systemInstruction: SYSTEM_PROMPT,
-  });
+  const model = genAI.getGenerativeModel(
+    {
+      model: GEMINI_MODEL,
+      systemInstruction: SYSTEM_PROMPT,
+    },
+    getGeminiRequestOptions()
+  );
 
   let raw = "";
   try {
@@ -147,10 +160,13 @@ export async function generateCardNewsText(
   ].join("\n");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: GEMINI_MODEL,
-    systemInstruction: CARDNEWS_SYSTEM,
-  });
+  const model = genAI.getGenerativeModel(
+    {
+      model: GEMINI_MODEL,
+      systemInstruction: CARDNEWS_SYSTEM,
+    },
+    getGeminiRequestOptions()
+  );
 
   let raw = "";
   try {

@@ -3,13 +3,24 @@
 type LimitNoticeModalProps = {
   open: boolean;
   onClose: () => void;
+  /** 모달 본문 */
+  message?: string;
+  /** 모달 제목 (기본: 안내) */
+  title?: string;
 };
 
-const MESSAGE = `요청이 많아 잠시 자동 생성이 제한되고 있어요 😢
-잠시 후 다시 시도하시거나, 직접 문구를 입력해보세요.`;
+const FALLBACK_MESSAGE =
+  "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도하거나, 직접 문구를 입력해 보세요.";
 
-export function LimitNoticeModal({ open, onClose }: LimitNoticeModalProps) {
+export function LimitNoticeModal({
+  open,
+  onClose,
+  message,
+  title = "안내",
+}: LimitNoticeModalProps) {
   if (!open) return null;
+
+  const displayMessage = message?.trim() || FALLBACK_MESSAGE;
 
   return (
     <div
@@ -29,10 +40,10 @@ export function LimitNoticeModal({ open, onClose }: LimitNoticeModalProps) {
           id="limit-notice-title"
           className="text-lg font-semibold text-white"
         >
-          안내
+          {title}
         </h2>
         <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-zinc-300">
-          {MESSAGE}
+          {displayMessage}
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
