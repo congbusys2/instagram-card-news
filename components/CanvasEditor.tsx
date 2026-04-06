@@ -101,8 +101,62 @@ export function CanvasEditor({
     }
   };
 
+  const safeMarginPx = 40;
+
   return (
     <div className="relative inline-block w-full max-w-[min(100%,520px)]">
+      <div className="relative w-full">
+        <canvas
+          ref={setRefs}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className={`h-auto w-full rounded-xl border border-zinc-800 bg-zinc-900 shadow-xl ${
+            canDragText ? "cursor-grab touch-none active:cursor-grabbing" : ""
+          }`}
+        />
+        {imageSrc ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-xl"
+            aria-hidden
+          >
+            <div
+              className="absolute inset-x-0 top-0 bg-black/30"
+              style={{ height: safeMarginPx }}
+            />
+            <div
+              className="absolute inset-x-0 bottom-0 bg-black/30"
+              style={{ height: safeMarginPx }}
+            />
+            <div
+              className="absolute left-0 bg-black/30"
+              style={{
+                top: safeMarginPx,
+                bottom: safeMarginPx,
+                width: safeMarginPx,
+              }}
+            />
+            <div
+              className="absolute right-0 bg-black/30"
+              style={{
+                top: safeMarginPx,
+                bottom: safeMarginPx,
+                width: safeMarginPx,
+              }}
+            />
+            <div
+              className="absolute box-border border border-dashed border-red-500/40"
+              style={{
+                top: safeMarginPx,
+                left: safeMarginPx,
+                right: safeMarginPx,
+                bottom: safeMarginPx,
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
       {isGenerating && (
         <div
           className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/55 backdrop-blur-[2px]"
@@ -114,16 +168,6 @@ export function CanvasEditor({
           </p>
         </div>
       )}
-      <canvas
-        ref={setRefs}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        className={`h-auto w-full rounded-xl border border-zinc-800 bg-zinc-900 shadow-xl ${
-          canDragText ? "cursor-grab touch-none active:cursor-grabbing" : ""
-        }`}
-      />
     </div>
   );
 }

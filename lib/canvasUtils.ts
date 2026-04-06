@@ -56,14 +56,14 @@ export function drawReadableOverlay(
 }
 
 export type DrawCardNewsTextOptions = {
-  /** 캔버스 중심 기준 X 오프셋(px, 1024 좌표계) */
+  /** 기본 좌측 여백(padX) 기준 X 이동(px, 1024 좌표계) */
   offsetX?: number;
-  /** 캔버스 중심 기준 Y 오프셋(px, 1024 좌표계) */
+  /** 블록 수직 중심 기준 Y 이동(px, 1024 좌표계) */
   offsetY?: number;
 };
 
 /**
- * 제목 + 본문을 중앙 블록으로 렌더링 (흰색, 그림자). offset은 블록 전체 이동.
+ * 제목 + 본문을 좌측 정렬 블록으로 렌더링 (흰색, 그림자). offset은 블록 전체 이동.
  */
 export function drawCardNewsText(
   ctx: CanvasRenderingContext2D,
@@ -115,21 +115,21 @@ export function drawCardNewsText(
     totalH += Math.min(bodyLines.length, 8) * bodyLh;
   }
 
-  const cx = size / 2 + offsetX;
+  const leftX = padX + offsetX;
   let cursorY = size / 2 + offsetY - totalH / 2;
 
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.55)";
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 2;
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
 
   if (titleLines.length) {
     ctx.font = `bold ${titleSize}px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif`;
     for (const ln of titleLines) {
-      ctx.fillText(ln, cx, cursorY);
+      ctx.fillText(ln, leftX, cursorY);
       cursorY += titleLh;
     }
     if (bodyLines.length) {
@@ -140,7 +140,7 @@ export function drawCardNewsText(
   if (bodyLines.length) {
     ctx.font = `600 ${bodySize}px system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif`;
     for (const ln of bodyLines.slice(0, 8)) {
-      ctx.fillText(ln, cx, cursorY);
+      ctx.fillText(ln, leftX, cursorY);
       cursorY += bodyLh;
     }
   }

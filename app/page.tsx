@@ -220,33 +220,35 @@ export default function Home() {
                     activeId === item.id ? "ring-2 ring-violet-500" : ""
                   }`}
                 >
-                  <label
-                    className="absolute left-6 top-6 z-20 flex cursor-pointer items-center gap-2 rounded-md bg-zinc-950/80 px-2 py-1 ring-1 ring-zinc-700"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(item.id)}
-                      onChange={() => toggleSelect(item.id)}
+                  <div className="relative z-20 mb-3 flex items-center justify-between gap-2">
+                    <label
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-600/80 bg-zinc-950/85 px-3 py-1.5 text-xs font-medium text-zinc-300 shadow-sm backdrop-blur-sm transition hover:border-zinc-500 hover:bg-zinc-900/90"
                       onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-violet-600"
-                    />
-                    <span className="text-xs text-zinc-400">선택</span>
-                  </label>
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 accent-violet-500"
+                      />
+                      <span>선택</span>
+                    </label>
 
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeItem(item.id);
-                    }}
-                    className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-sm text-zinc-300 ring-1 ring-zinc-600 hover:bg-red-900/80"
-                    aria-label="이미지 제거"
-                  >
-                    ×
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeItem(item.id);
+                      }}
+                      className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg border border-zinc-600/80 bg-zinc-950/85 px-3 text-sm font-medium leading-none text-zinc-300 shadow-sm backdrop-blur-sm transition hover:border-red-500/50 hover:bg-red-950/50 hover:text-red-200"
+                      aria-label="이미지 제거"
+                    >
+                      ×
+                    </button>
+                  </div>
 
-                  <div className="mt-8 flex w-full justify-center">
+                  <div className="flex w-full justify-center">
                     <CanvasEditor
                       registerCanvas={registerCanvas(item.id)}
                       imageSrc={item.url}
